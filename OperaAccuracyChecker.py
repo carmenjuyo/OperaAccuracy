@@ -44,7 +44,7 @@ def color_scale(val):
 # Streamlit application
 def main():
     # Center the title using markdown with HTML
-    st.markdown("<h1 style='text-align: center;'>Daily Variance and Accuracy Calculator</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center;'> Opera Daily Variance and Accuracy Calculator</h1>", unsafe_allow_html=True)
 
     # Note/warning box with matching colors
     st.warning("The reference date of the Daily Totals Extract should be equal to the latest History and Forecast file date.")
