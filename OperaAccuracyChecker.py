@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from xml.etree import ElementTree
+import imageio
 from datetime import datetime
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
@@ -14,6 +14,7 @@ def parse_xml(xml_content):
     tree = ElementTree.fromstring(xml_content)
     # Extract relevant data
     data = []
+    system_time = datetime.strptime(tree.find('G_RESORT/SYSTEM_TIME').text, "%d-%b-%y %H:%M:%S")
     for g_considered_date in tree.iter('G_CONSIDERED_DATE'):
         date = g_considered_date.find('CONSIDERED_DATE').text
         ind_deduct_rooms = int(g_considered_date.find('IND_DEDUCT_ROOMS').text)
@@ -23,6 +24,7 @@ def parse_xml(xml_content):
         date = datetime.strptime(date, "%d-%b-%y").date()  # Assuming date is in 'DD-MMM-YY' format
         data.append({
             'date': date,
+            'system_time': system_time,
             'HF RNs': ind_deduct_rooms + grp_deduct_rooms,
             'HF Rev': ind_deduct_revenue + grp_deduct_revenue
         })
@@ -56,18 +58,21 @@ def main():
     # File uploaders in columns
     col1, col2 = st.columns(2)
     with col1:
-        xml_file = st.file_uploader("Upload History and Forecast .xml", type=['xml'])
+        xml_files = st.file_uploader("Upload History and Forecast .xml", type=['xml'], accept_multiple_files=True)
     with col2:
         csv_file = st.file_uploader("Upload Daily Totals Extract from Support UI", type=['csv'])
 
     # When files are uploaded
-    if xml_file and csv_file:
-        # Extract resort name from XML file name
-        resort_name = xml_file.name.split('_')[5]
-        st.subheader(f"Accuracy Matrix for the hotel with code: {resort_name}")
+    if xml_files and csv_file:
+        # Process XML files and combine them into a single DataFrame
+        combined_xml_df = pd.DataFrame()
+        for xml_file in xml_files:
+            xml_df = parse_xml(xml_file.getvalue())
+            combined_xml_df = pd.concat([combined_xml_df, xml_df])
 
-        # Process XML
-        xml_df = parse_xml(xml_file.getvalue())
+        # Keep only the latest entry for each considered date
+        combined_xml_df = combined_xml_df.sort_values(by=['date', 'system_time'], ascending=[True, False])
+        combined_xml_df = combined_xml_df.drop_duplicates(subset=['date'], keep='first')
 
         # Process CSV
         csv_df = pd.read_csv(csv_file, delimiter=';', quotechar='"')
@@ -77,11 +82,11 @@ def main():
         csv_df['Juyo Rev'] = csv_df['revNet'].astype(float)
 
         # Ensure both date columns are of type datetime64[ns] before merging
-        xml_df['date'] = pd.to_datetime(xml_df['date'], errors='coerce')
+        combined_xml_df['date'] = pd.to_datetime(combined_xml_df['date'], errors='coerce')
         csv_df['arrivalDate'] = pd.to_datetime(csv_df['arrivalDate'], errors='coerce')
 
         # Merge data
-        merged_df = pd.merge(xml_df, csv_df, left_on='date', right_on='arrivalDate')
+        merged_df = pd.merge(combined_xml_df, csv_df, left_on='date', right_on='arrivalDate')
 
         # Calculate discrepancies for rooms and revenue
         merged_df['RN Diff'] = merged_df['HF RNs'] - merged_df['Juyo RN']
