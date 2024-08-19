@@ -29,21 +29,17 @@ def parse_xml(xml_content):
     return pd.DataFrame(data)
 
 # Define color coding for accuracy values
-def color_accuracy(val):
-    color = 'red'  # default color
-    if '%' in val:  # check if value is a percentage
-        num = float(val.strip('%'))
-        if 'RNs' in val:  # RNs column color coding
-            if num >= 98.5:
-                color = 'green'
-            elif num >= 95:
-                color = 'orange'
-        else:  # Revenue column color coding
-            if num >= 95:
-                color = 'green'
-            elif num >= 90:
-                color = 'orange'
-    return f'background-color: {color}; color: white;' if color != 'red' else f'color: {color};'
+def color_scale(val):
+    """Color scale for percentages."""
+    if isinstance(val, str) and '%' in val:
+        val = float(val.strip('%'))
+        if val >= 98:
+            return 'background-color: #469798; color: white;'  # green
+        elif 95 <= val < 98:
+            return 'background-color: #F2A541; color: white;'  # yellow
+        else:
+            return 'background-color: #BF3100; color: white;'  # red
+    return ''
 
 # Streamlit application
 def main():
@@ -90,7 +86,15 @@ def main():
         merged_df['RN Diff'] = merged_df['HF RNs'] - merged_df['Juyo RN']
         merged_df['Rev Diff'] = merged_df['HF Rev'] - merged_df['Juyo Rev']
 
-        # Calculate accuracies
+        # Calculate absolute accuracy percentages
+        merged_df['Abs RN Accuracy'] = (abs(merged_df['RN Diff']) / merged_df['HF RNs']) * 100
+        merged_df['Abs Rev Accuracy'] = (abs(merged_df['Rev Diff']) / merged_df['HF Rev']) * 100
+
+        # Format accuracy percentages as strings with '%' symbol
+        merged_df['Abs RN Accuracy'] = merged_df['Abs RN Accuracy'].map(lambda x: f"{x:.2f}%")
+        merged_df['Abs Rev Accuracy'] = merged_df['Abs Rev Accuracy'].map(lambda x: f"{x:.2f}%")
+
+        # Calculate overall accuracies
         current_date = pd.to_datetime('today').normalize()  # Get the current date without the time part
         past_mask = merged_df['date'] < current_date
         future_mask = merged_df['date'] >= current_date
@@ -109,7 +113,7 @@ def main():
 
         # Center the accuracy matrix table
         with st.container():
-            st.table(accuracy_df.style.applymap(color_accuracy).set_table_styles([{"selector": "th", "props": [("backgroundColor", "#f0f2f6")]}]))
+            st.table(accuracy_df.style.applymap(color_scale).set_table_styles([{"selector": "th", "props": [("backgroundColor", "#f0f2f6")]}]))
 
         # Warning about future discrepancies with matching colors
         st.warning("Future discrepancies might be a result of timing discrepancies between the moment that the data was received and the moment that the history and forecast file was received.")
@@ -159,8 +163,8 @@ def main():
         st.markdown("### Daily Variance Detail", unsafe_allow_html=True)
         detail_container = st.container()
         with detail_container:
-            formatted_df = merged_df[['date', 'HF RNs', 'HF Rev', 'Juyo RN', 'Juyo Rev', 'RN Diff', 'Rev Diff']]
-            styled_df = formatted_df.style.format({'RN Diff': "{:+.0f}", 'Rev Diff': "{:+.2f}"}).set_properties(**{'text-align': 'center'})
+            formatted_df = merged_df[['date', 'HF RNs', 'HF Rev', 'Juyo RN', 'Juyo Rev', 'RN Diff', 'Rev Diff', 'Abs RN Accuracy', 'Abs Rev Accuracy']]
+            styled_df = formatted_df.style.applymap(color_scale, subset=['Abs RN Accuracy', 'Abs Rev Accuracy']).set_properties(**{'text-align': 'center'})
             st.table(styled_df)
 
 if __name__ == "__main__":
