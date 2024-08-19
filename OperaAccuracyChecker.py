@@ -6,7 +6,7 @@ import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 
 # Set page layout to wide
-st.set_page_config(layout="wide", page_title="Daily Variance and Accuracy Calculator")
+st.set_page_config(layout="wide", page_title="Opera Daily Variance and Accuracy Calculator")
 
 # Define the function to parse the XML
 def parse_xml(xml_content):
