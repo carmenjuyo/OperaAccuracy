@@ -87,8 +87,8 @@ def main():
         merged_df['Rev Diff'] = merged_df['HF Rev'] - merged_df['Juyo Rev']
 
         # Calculate absolute accuracy percentages
-        merged_df['Abs RN Accuracy'] = (abs(merged_df['RN Diff']) / merged_df['HF RNs']) * 100
-        merged_df['Abs Rev Accuracy'] = (abs(merged_df['Rev Diff']) / merged_df['HF Rev']) * 100
+        merged_df['Abs RN Accuracy'] = (1 - abs(merged_df['RN Diff']) / merged_df['HF RNs']) * 100
+        merged_df['Abs Rev Accuracy'] = (1 - abs(merged_df['Rev Diff']) / merged_df['HF Rev']) * 100
 
         # Format accuracy percentages as strings with '%' symbol
         merged_df['Abs RN Accuracy'] = merged_df['Abs RN Accuracy'].map(lambda x: f"{x:.2f}%")
