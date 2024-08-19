@@ -83,8 +83,8 @@ def main():
         merged_df = pd.merge(combined_xml_df, csv_df, left_on='date', right_on='arrivalDate')
 
         # Calculate discrepancies for rooms and revenue
-        merged_df['RN Diff'] = merged_df['HF RNs'] - merged_df['Juyo RN']
-        merged_df['Rev Diff'] = merged_df['HF Rev'] - merged_df['Juyo Rev']
+        merged_df['RN Diff'] = merged_df['Juyo RN'] - merged_df['HF RNs']
+        merged_df['Rev Diff'] = merged_df['Juyo Rev'] - merged_df['HF Rev']
 
         # Calculate absolute accuracy percentages
         merged_df['Abs RN Accuracy'] = (1 - abs(merged_df['RN Diff']) / merged_df['HF RNs']) * 100
