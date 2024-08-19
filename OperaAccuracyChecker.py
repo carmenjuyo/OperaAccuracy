@@ -126,7 +126,7 @@ def main():
             x=merged_df['date'],
             y=merged_df['RN Diff'],
             name='RNs Discrepancy',
-            marker_color='blue'
+            marker_color='cyan'
         ), secondary_y=False)
 
         # Revenue Discrepancies - Line chart
@@ -135,7 +135,7 @@ def main():
             y=merged_df['Rev Diff'],
             name='Revenue Discrepancy',
             mode='lines+markers',
-            line=dict(color='red', width=2),
+            line=dict(color='#BF3100', width=2),
             marker=dict(size=8)
         ), secondary_y=True)
 
