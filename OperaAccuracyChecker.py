@@ -47,7 +47,7 @@ def main():
     st.markdown("<h1 style='text-align: center;'>Daily Variance and Accuracy Calculator</h1>", unsafe_allow_html=True)
 
     # Note/warning box with matching colors
-    st.warning("The reference date of the Daily Totals Extract should be equal to the History and Forecast file date.")
+    st.warning("The reference date of the Daily Totals Extract should be equal to the latest History and Forecast file date.")
 
     # File uploaders in columns
     col1, col2 = st.columns(2)
