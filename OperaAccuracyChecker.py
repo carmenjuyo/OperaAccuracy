@@ -161,18 +161,22 @@ def main():
             merged_df['Abs RN Accuracy'] = (1 - abs(merged_df['RN Diff']) / merged_df['HF RNs']) * 100
             merged_df['Abs Rev Accuracy'] = (1 - abs(merged_df['Rev Diff']) / merged_df['HF Rev']) * 100
 
+            # Convert the accuracy values to strings formatted as percentages
+            merged_df['Abs RN Accuracy'] = merged_df['Abs RN Accuracy'].map(lambda x: f"{x:.2f}%")
+            merged_df['Abs Rev Accuracy'] = merged_df['Abs Rev Accuracy'].map(lambda x: f"{x:.2f}%")
+
             current_date = pd.to_datetime('today').normalize()
             past_mask = merged_df['date'] < current_date
             future_mask = merged_df['date'] >= current_date
 
-            past_rooms_accuracy = (1 - (abs(merged_df.loc[past_mask, 'RN Diff']).sum() / merged_df.loc[past_mask, 'HF RNs'].sum()))
-            past_revenue_accuracy = (1 - (abs(merged_df.loc[past_mask, 'Rev Diff']).sum() / merged_df.loc[past_mask, 'HF Rev'].sum()))
-            future_rooms_accuracy = (1 - (abs(merged_df.loc[future_mask, 'RN Diff']).sum() / merged_df.loc[future_mask, 'HF RNs'].sum()))
-            future_revenue_accuracy = (1 - (abs(merged_df.loc[future_mask, 'Rev Diff']).sum() / merged_df.loc[future_mask, 'HF Rev'].sum()))
+            past_rooms_accuracy = (1 - (abs(merged_df.loc[past_mask, 'RN Diff']).sum() / merged_df.loc[past_mask, 'HF RNs'].sum())) * 100
+            past_revenue_accuracy = (1 - (abs(merged_df.loc[past_mask, 'Rev Diff']).sum() / merged_df.loc[past_mask, 'HF Rev'].sum())) * 100
+            future_rooms_accuracy = (1 - (abs(merged_df.loc[future_mask, 'RN Diff']).sum() / merged_df.loc[future_mask, 'HF RNs'].sum())) * 100
+            future_revenue_accuracy = (1 - (abs(merged_df.loc[future_mask, 'Rev Diff']).sum() / merged_df.loc[future_mask, 'HF Rev'].sum())) * 100
 
             accuracy_data = {
-                "RNs": [past_rooms_accuracy, future_rooms_accuracy],
-                "Revenue": [past_revenue_accuracy, future_revenue_accuracy]
+                "RNs": [f"{past_rooms_accuracy:.2f}%", f"{future_rooms_accuracy:.2f}%"],
+                "Revenue": [f"{past_revenue_accuracy:.2f}%", f"{future_revenue_accuracy:.2f}%"]
             }
             accuracy_df = pd.DataFrame(accuracy_data, index=["Past", "Future"])
 
