@@ -80,16 +80,16 @@ def create_excel_download(combined_df, base_filename, past_accuracy_rn, past_acc
 
         # Write the combined past and future results to a single sheet
         if not combined_df.empty:
-            combined_df.to_excel(writer, sheet_name='Combined Accuracy', index=False)
-            worksheet_combined = writer.sheets['Combined Accuracy']
+            combined_df.to_excel(writer, sheet_name='Daily Variance Detail', index=False)
+            worksheet_combined = writer.sheets['Daily Variance Detail']
 
             # Format columns
             worksheet_combined.set_column('A:A', None, format_date)    # Date
             worksheet_combined.set_column('B:B', None, format_whole)   # Whole numbers
             worksheet_combined.set_column('C:C', None, format_float)   # Floats
-            worksheet_combined.set_column('D:D', None, format_whole)  # Whole numbers
+            worksheet_combined.set_column('D:D', None, format_number)  # Numbers
             worksheet_combined.set_column('E:E', None, format_float)   # Floats
-            worksheet_combined.set_column('F:F', None, format_whole)  # Whole numbers
+            worksheet_combined.set_column('F:F', None, format_number)  # Numbers
             worksheet_combined.set_column('G:G', None, format_float)   # Floats
             worksheet_combined.set_column('H:H', None, format_percent) # Percentages
             worksheet_combined.set_column('I:I', None, format_percent) # Percentages
@@ -237,10 +237,12 @@ def main():
             styled_df = formatted_df.style.applymap(color_scale, subset=['Abs RN Accuracy', 'Abs Rev Accuracy']).set_properties(**{'text-align': 'center'})
             st.table(styled_df)
 
+        # Combine past and future data for export
+        combined_df = pd.concat([formatted_df[past_mask], formatted_df[future_mask]])
+
         # Add Excel export functionality
-        st.markdown("### Export Results", unsafe_allow_html=True)
         base_filename = "Opera_Daily_Variance_Accuracy"
-        output, filename = create_excel_download(merged_df, base_filename,
+        output, filename = create_excel_download(combined_df, base_filename,
                                                  past_rooms_accuracy, past_revenue_accuracy,
                                                  future_rooms_accuracy, future_revenue_accuracy)
         st.download_button(label="Download Excel Report",
