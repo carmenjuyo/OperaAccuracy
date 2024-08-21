@@ -9,10 +9,17 @@ from plotly.subplots import make_subplots
 st.set_page_config(layout="wide", page_title="Opera Daily Variance and Accuracy Calculator")
 
 # Define the function to parse the XML
-def parse_xml(xml_content):
+def parse_xml(xml_content, file_name):
     tree = ElementTree.fromstring(xml_content)
     data = []
-    system_time = datetime.strptime(tree.find('G_RESORT/SYSTEM_TIME').text, "%d-%b-%y %H:%M:%S")
+    system_time_elem = tree.find('G_RESORT/SYSTEM_TIME')
+    
+    if system_time_elem is not None:
+        system_time = datetime.strptime(system_time_elem.text, "%d-%b-%y %H:%M:%S")
+    else:
+        # Extract date from the file name
+        system_time = datetime.strptime(file_name.split('_')[0], "%Y%m%d")
+
     for g_considered_date in tree.iter('G_CONSIDERED_DATE'):
         date = g_considered_date.find('CONSIDERED_DATE').text
         ind_deduct_rooms = int(g_considered_date.find('IND_DEDUCT_ROOMS').text)
@@ -58,11 +65,19 @@ def main():
 
     # When files are uploaded
     if xml_files and csv_file:
+        # Initialize progress bar
+        progress_bar = st.progress(0)
+        progress_step = 1 / len(xml_files)
+        
         # Process XML files and combine them into a single DataFrame
         combined_xml_df = pd.DataFrame()
-        for xml_file in xml_files:
-            xml_df = parse_xml(xml_file.getvalue())
+        for i, xml_file in enumerate(xml_files):
+            xml_df = parse_xml(xml_file.getvalue(), xml_file.name)
             combined_xml_df = pd.concat([combined_xml_df, xml_df])
+            progress_bar.progress((i + 1) * progress_step)
+        
+        # Remove progress bar when done
+        progress_bar.empty()
 
         # Keep only the latest entry for each considered date
         combined_xml_df = combined_xml_df.sort_values(by=['date', 'system_time'], ascending=[True, False])
