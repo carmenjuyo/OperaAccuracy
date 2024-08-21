@@ -62,42 +62,18 @@ def create_excel_download(combined_df, base_filename, past_accuracy_rn, past_acc
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         workbook = writer.book
         
-        # Write the Accuracy Matrix
-        accuracy_matrix = pd.DataFrame({
-            'Metric': ['RNs', 'Revenue'],
-            'Past': [past_accuracy_rn / 100, past_accuracy_rev / 100],  # Store as decimal
-            'Future': [future_accuracy_rn / 100, future_accuracy_rev / 100]  # Store as decimal
-        })
-        
-        accuracy_matrix.to_excel(writer, sheet_name='Accuracy Matrix', index=False, startrow=1)
-        worksheet = writer.sheets['Accuracy Matrix']
-        # Define formats
-        format_date = workbook.add_format({'num_format': 'dd-mmm-yyyy'})
-        format_whole = workbook.add_format({'num_format': '0'})  # Whole numbers
-        format_float = workbook.add_format({'num_format': '0.00'})  # Floats
-        format_number = workbook.add_format({'num_format': '#,##0.00'})  # Number with thousands separator and two decimals
-        format_percent = workbook.add_format({'num_format': '0.00%'})  # Percentage format
-        
-        # Apply percentage format to the relevant cells in Accuracy Matrix
-        worksheet.set_column('B:B', None, format_percent)
-        worksheet.set_column('C:C', None, format_percent)
-        
-        # Apply conditional formatting for Accuracy Matrix
-        format_green = workbook.add_format({'bg_color': '#469798', 'font_color': '#FFFFFF'})
-        format_yellow = workbook.add_format({'bg_color': '#F2A541', 'font_color': '#FFFFFF'})
-        format_red = workbook.add_format({'bg_color': '#BF3100', 'font_color': '#FFFFFF'})
-        
-        worksheet.conditional_format('B3:B4', {'type': 'cell', 'criteria': '<', 'value': 0.96, 'format': format_red})
-        worksheet.conditional_format('B3:B4', {'type': 'cell', 'criteria': 'between', 'minimum': 0.96, 'maximum': 0.9799, 'format': format_yellow})
-        worksheet.conditional_format('B3:B4', {'type': 'cell', 'criteria': '>=', 'value': 0.98, 'format': format_green})
-        worksheet.conditional_format('C3:C4', {'type': 'cell', 'criteria': '<', 'value': 0.96, 'format': format_red})
-        worksheet.conditional_format('C3:C4', {'type': 'cell', 'criteria': 'between', 'minimum': 0.96, 'maximum': 0.9799, 'format': format_yellow})
-        worksheet.conditional_format('C3:C4', {'type': 'cell', 'criteria': '>=', 'value': 0.98, 'format': format_green})
-        
         # Write the combined past and future results to a single sheet
         if not combined_df.empty:
             combined_df.to_excel(writer, sheet_name='Daily Variance Detail', index=False)
             worksheet_combined = writer.sheets['Daily Variance Detail']
+            
+            # Define formats
+            format_date = workbook.add_format({'num_format': 'dd-mmm-yyyy'})
+            format_whole = workbook.add_format({'num_format': '0'})  # Whole numbers
+            format_float = workbook.add_format({'num_format': '0.00'})  # Floats
+            format_number = workbook.add_format({'num_format': '#,##0.00'})  # Number with thousands separator and two decimals
+            format_percent = workbook.add_format({'num_format': '0.00%'})  # Percentage format
+            
             # Format columns
             worksheet_combined.set_column('A:A', None, format_date)    # Date
             worksheet_combined.set_column('B:B', None, format_whole)   # Whole numbers
@@ -111,17 +87,18 @@ def create_excel_download(combined_df, base_filename, past_accuracy_rn, past_acc
             
             # Apply conditional formatting to the percentage columns (H and I)
             worksheet_combined.conditional_format('H2:H{}'.format(len(combined_df) + 1),
-                                                  {'type': 'cell', 'criteria': '<', 'value': 0.96, 'format': format_red})
+                                                  {'type': 'cell', 'criteria': '<', 'value': 96, 'format': format_red})
             worksheet_combined.conditional_format('H2:H{}'.format(len(combined_df) + 1),
-                                                  {'type': 'cell', 'criteria': 'between', 'minimum': 0.96, 'maximum': 0.9799, 'format': format_yellow})
+                                                  {'type': 'cell', 'criteria': 'between', 'minimum': 96, 'maximum': 97.99, 'format': format_yellow})
             worksheet_combined.conditional_format('H2:H{}'.format(len(combined_df) + 1),
-                                                  {'type': 'cell', 'criteria': '>=', 'value': 0.98, 'format': format_green})
+                                                  {'type': 'cell', 'criteria': '>=', 'value': 98, 'format': format_green})
             worksheet_combined.conditional_format('I2:I{}'.format(len(combined_df) + 1),
-                                                  {'type': 'cell', 'criteria': '<', 'value': 0.96, 'format': format_red})
+                                                  {'type': 'cell', 'criteria': '<', 'value': 96, 'format': format_red})
             worksheet_combined.conditional_format('I2:I{}'.format(len(combined_df) + 1),
-                                                  {'type': 'cell', 'criteria': 'between', 'minimum': 0.96, 'maximum': 0.9799, 'format': format_yellow})
+                                                  {'type': 'cell', 'criteria': 'between', 'minimum': 96, 'maximum': 97.99, 'format': format_yellow})
             worksheet_combined.conditional_format('I2:I{}'.format(len(combined_df) + 1),
-                                                  {'type': 'cell', 'criteria': '>=', 'value': 0.98, 'format': format_green})
+                                                  {'type': 'cell', 'criteria': '>=', 'value': 98, 'format': format_green})
+    
     output.seek(0)
     return output, base_filename
 
