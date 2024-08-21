@@ -163,6 +163,10 @@ def main():
 
         # Process CSV
         csv_df = pd.read_csv(csv_file, delimiter=';', quotechar='"')
+
+        # Drop any columns that are completely empty (all NaN)
+        csv_df = csv_df.dropna(axis=1, how='all')
+
         csv_df.columns = [col.replace('"', '').strip() for col in csv_df.columns]
         csv_df['arrivalDate'] = pd.to_datetime(csv_df['arrivalDate'], errors='coerce')
         csv_df['Juyo RN'] = csv_df['rn'].astype(int)
