@@ -10,9 +10,8 @@ from io import BytesIO
 st.set_page_config(layout="wide", page_title="Opera Daily Variance and Accuracy Calculator")
 
 # Define the function to parse the XML
-def parse_xml(xml_file):
-    # Extract the filename and attempt to parse the date from it
-    filename = xml_file.name
+def parse_xml(xml_content, filename):
+    # Extract the date from the filename
     try:
         file_date = datetime.strptime(filename.split('_')[0], "%Y%m%d")
     except ValueError:
@@ -20,7 +19,6 @@ def parse_xml(xml_file):
         file_date = None
 
     # Parse the XML content
-    xml_content = xml_file.getvalue()
     tree = ElementTree.fromstring(xml_content)
     
     # Attempt to find the SYSTEM_TIME element
@@ -156,7 +154,7 @@ def main():
         # Process XML files and combine them into a single DataFrame
         combined_xml_df = pd.DataFrame()
         for xml_file in xml_files:
-            xml_df = parse_xml(xml_file.getvalue())
+            xml_df = parse_xml(xml_file.getvalue(), xml_file.name)
             combined_xml_df = pd.concat([combined_xml_df, xml_df])
 
         # Keep only the latest entry for each considered date
