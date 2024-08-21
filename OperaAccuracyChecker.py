@@ -55,8 +55,7 @@ def color_scale(val):
         else:
             return 'background-color: #BF3100; color: white;'  # red
     return ''
-# Function to create Excel file for download with color formatting and accuracy matrix
-# Function to create Excel file for download with color formatting and accuracy matrix
+    
 # Function to create Excel file for download with color formatting and accuracy matrix
 def create_excel_download(combined_df, base_filename, past_accuracy_rn, past_accuracy_rev, future_accuracy_rn, future_accuracy_rev):
     output = BytesIO()
@@ -107,8 +106,8 @@ def create_excel_download(combined_df, base_filename, past_accuracy_rn, past_acc
             worksheet_combined.set_column('E:E', None, format_float)   # Floats
             worksheet_combined.set_column('F:F', None, format_number)  # Numbers
             worksheet_combined.set_column('G:G', None, format_float)   # Floats
-            worksheet_combined.set_column('H:H', None, format_percent) # Percentages
-            worksheet_combined.set_column('I:I', None, format_percent) # Percentages
+            worksheet_combined.set_column('H:H', None, format_percent) # Percentages (Abs RN Accuracy)
+            worksheet_combined.set_column('I:I', None, format_percent) # Percentages (Abs Rev Accuracy)
             
             # Apply conditional formatting to the percentage columns (H and I)
             worksheet_combined.conditional_format('H2:H{}'.format(len(combined_df) + 1),
