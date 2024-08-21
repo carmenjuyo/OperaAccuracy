@@ -62,8 +62,8 @@ def create_excel_download(combined_df, base_filename, past_accuracy_rn, past_acc
         
         accuracy_matrix = pd.DataFrame({
             'Metric': ['RNs', 'Revenue'],
-            'Past': [past_accuracy_rn / 100, past_accuracy_rev / 100],
-            'Future': [future_accuracy_rn / 100, future_accuracy_rev / 100]
+            'Past': [past_accuracy_rn, past_accuracy_rev],
+            'Future': [future_accuracy_rn, future_accuracy_rev]
         })
         
         accuracy_matrix.to_excel(writer, sheet_name='Accuracy Matrix', index=False, startrow=1)
@@ -82,13 +82,13 @@ def create_excel_download(combined_df, base_filename, past_accuracy_rn, past_acc
         format_yellow = workbook.add_format({'bg_color': '#F2A541', 'font_color': '#FFFFFF'})
         format_red = workbook.add_format({'bg_color': '#BF3100', 'font_color': '#FFFFFF'})
         
-        worksheet.conditional_format('B3:B4', {'type': 'cell', 'criteria': '<', 'value': 0.96, 'format': format_red})
-        worksheet.conditional_format('B3:B4', {'type': 'cell', 'criteria': 'between', 'minimum': 0.96, 'maximum': 0.9799, 'format': format_yellow})
-        worksheet.conditional_format('B3:B4', {'type': 'cell', 'criteria': '>=', 'value': 0.98, 'format': format_green})
+        worksheet.conditional_format('B3:B4', {'type': 'cell', 'criteria': '<', 'value': 96, 'format': format_red})
+        worksheet.conditional_format('B3:B4', {'type': 'cell', 'criteria': 'between', 'minimum': 96, 'maximum': 97.99, 'format': format_yellow})
+        worksheet.conditional_format('B3:B4', {'type': 'cell', 'criteria': '>=', 'value': 98, 'format': format_green})
 
-        worksheet.conditional_format('C3:C4', {'type': 'cell', 'criteria': '<', 'value': 0.96, 'format': format_red})
-        worksheet.conditional_format('C3:C4', {'type': 'cell', 'criteria': 'between', 'minimum': 0.96, 'maximum': 0.9799, 'format': format_yellow})
-        worksheet.conditional_format('C3:C4', {'type': 'cell', 'criteria': '>=', 'value': 0.98, 'format': format_green})
+        worksheet.conditional_format('C3:C4', {'type': 'cell', 'criteria': '<', 'value': 96, 'format': format_red})
+        worksheet.conditional_format('C3:C4', {'type': 'cell', 'criteria': 'between', 'minimum': 96, 'maximum': 97.99, 'format': format_yellow})
+        worksheet.conditional_format('C3:C4', {'type': 'cell', 'criteria': '>=', 'value': 98, 'format': format_green})
 
         if not combined_df.empty:
             combined_df.to_excel(writer, sheet_name='Daily Variance Detail', index=False)
@@ -105,18 +105,18 @@ def create_excel_download(combined_df, base_filename, past_accuracy_rn, past_acc
             worksheet_combined.set_column('I:I', None, format_percent)
 
             worksheet_combined.conditional_format('H2:H{}'.format(len(combined_df) + 1),
-                                                  {'type': 'cell', 'criteria': '<', 'value': 0.96, 'format': format_red})
+                                                  {'type': 'cell', 'criteria': '<', 'value': 96, 'format': format_red})
             worksheet_combined.conditional_format('H2:H{}'.format(len(combined_df) + 1),
-                                                  {'type': 'cell', 'criteria': 'between', 'minimum': 0.96, 'maximum': 0.9799, 'format': format_yellow})
+                                                  {'type': 'cell', 'criteria': 'between', 'minimum': 96, 'maximum': 97.99, 'format': format_yellow})
             worksheet_combined.conditional_format('H2:H{}'.format(len(combined_df) + 1),
-                                                  {'type': 'cell', 'criteria': '>=', 'value': 0.98, 'format': format_green})
+                                                  {'type': 'cell', 'criteria': '>=', 'value': 98, 'format': format_green})
 
             worksheet_combined.conditional_format('I2:I{}'.format(len(combined_df) + 1),
-                                                  {'type': 'cell', 'criteria': '<', 'value': 0.96, 'format': format_red})
+                                                  {'type': 'cell', 'criteria': '<', 'value': 96, 'format': format_red})
             worksheet_combined.conditional_format('I2:I{}'.format(len(combined_df) + 1),
-                                                  {'type': 'cell', 'criteria': 'between', 'minimum': 0.96, 'maximum': 0.9799, 'format': format_yellow})
+                                                  {'type': 'cell', 'criteria': 'between', 'minimum': 96, 'maximum': 97.99, 'format': format_yellow})
             worksheet_combined.conditional_format('I2:I{}'.format(len(combined_df) + 1),
-                                                  {'type': 'cell', 'criteria': '>=', 'value': 0.98, 'format': format_green})
+                                                  {'type': 'cell', 'criteria': '>=', 'value': 98, 'format': format_green})
     output.seek(0)
     return output, base_filename
 
@@ -160,9 +160,6 @@ def main():
 
             merged_df['Abs RN Accuracy'] = (1 - abs(merged_df['RN Diff']) / merged_df['HF RNs']) * 100
             merged_df['Abs Rev Accuracy'] = (1 - abs(merged_df['Rev Diff']) / merged_df['HF Rev']) * 100
-
-            merged_df['Abs RN Accuracy'] = merged_df['Abs RN Accuracy']
-            merged_df['Abs Rev Accuracy'] = merged_df['Abs Rev Accuracy']
 
             current_date = pd.to_datetime('today').normalize()
             past_mask = merged_df['date'] < current_date
