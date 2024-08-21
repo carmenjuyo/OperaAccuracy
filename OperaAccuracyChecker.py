@@ -1,4 +1,4 @@
-import streamlit as st
+ import streamlit as st
 import pandas as pd
 from xml.etree import ElementTree
 from datetime import datetime
@@ -151,135 +151,138 @@ def main():
 
     # When files are uploaded
     if xml_files and csv_file:
-        # Process XML files and combine them into a single DataFrame
-        combined_xml_df = pd.DataFrame()
-        for xml_file in xml_files:
-            xml_df = parse_xml(xml_file.getvalue(), xml_file.name)
-            combined_xml_df = pd.concat([combined_xml_df, xml_df])
+        process_button = st.button("Process Data")
+        if process_button:
+            with st.spinner("Processing..."):
+                # Process XML files and combine them into a single DataFrame
+                combined_xml_df = pd.DataFrame()
+                for xml_file in xml_files:
+                    xml_df = parse_xml(xml_file.getvalue(), xml_file.name)
+                    combined_xml_df = pd.concat([combined_xml_df, xml_df])
 
-        # Keep only the latest entry for each considered date
-        combined_xml_df = combined_xml_df.sort_values(by=['date', 'system_time'], ascending=[True, False])
-        combined_xml_df = combined_xml_df.drop_duplicates(subset=['date'], keep='first')
+                # Keep only the latest entry for each considered date
+                combined_xml_df = combined_xml_df.sort_values(by=['date', 'system_time'], ascending=[True, False])
+                combined_xml_df = combined_xml_df.drop_duplicates(subset=['date'], keep='first')
 
-        # Process CSV
-        csv_df = pd.read_csv(csv_file, delimiter=';', quotechar='"')
+                # Process CSV
+                csv_df = pd.read_csv(csv_file, delimiter=';', quotechar='"')
 
-        # Drop any columns that are completely empty (all NaN)
-        csv_df = csv_df.dropna(axis=1, how='all')
+                # Drop any columns that are completely empty (all NaN)
+                csv_df = csv_df.dropna(axis=1, how='all')
 
-        csv_df.columns = [col.replace('"', '').strip() for col in csv_df.columns]
-        csv_df['arrivalDate'] = pd.to_datetime(csv_df['arrivalDate'], errors='coerce')
-        csv_df['Juyo RN'] = csv_df['rn'].astype(int)
-        csv_df['Juyo Rev'] = csv_df['revNet'].astype(float)
+                csv_df.columns = [col.replace('"', '').strip() for col in csv_df.columns]
+                csv_df['arrivalDate'] = pd.to_datetime(csv_df['arrivalDate'], errors='coerce')
+                csv_df['Juyo RN'] = csv_df['rn'].astype(int)
+                csv_df['Juyo Rev'] = csv_df['revNet'].astype(float)
 
-        # Ensure both date columns are of type datetime64[ns] before merging
-        combined_xml_df['date'] = pd.to_datetime(combined_xml_df['date'], errors='coerce')
-        csv_df['arrivalDate'] = pd.to_datetime(csv_df['arrivalDate'], errors='coerce')
+                # Ensure both date columns are of type datetime64[ns] before merging
+                combined_xml_df['date'] = pd.to_datetime(combined_xml_df['date'], errors='coerce')
+                csv_df['arrivalDate'] = pd.to_datetime(csv_df['arrivalDate'], errors='coerce')
 
-        # Merge data
-        merged_df = pd.merge(combined_xml_df, csv_df, left_on='date', right_on='arrivalDate')
+                # Merge data
+                merged_df = pd.merge(combined_xml_df, csv_df, left_on='date', right_on='arrivalDate')
 
-        # Calculate discrepancies for rooms and revenue
-        merged_df['RN Diff'] = merged_df['Juyo RN'] - merged_df['HF RNs']
-        merged_df['Rev Diff'] = merged_df['Juyo Rev'] - merged_df['HF Rev']
+                # Calculate discrepancies for rooms and revenue
+                merged_df['RN Diff'] = merged_df['Juyo RN'] - merged_df['HF RNs']
+                merged_df['Rev Diff'] = merged_df['Juyo Rev'] - merged_df['HF Rev']
 
-        # Calculate absolute accuracy percentages
-        merged_df['Abs RN Accuracy'] = (1 - abs(merged_df['RN Diff']) / merged_df['HF RNs']) * 100
-        merged_df['Abs Rev Accuracy'] = (1 - abs(merged_df['Rev Diff']) / merged_df['HF Rev']) * 100
+                # Calculate absolute accuracy percentages
+                merged_df['Abs RN Accuracy'] = (1 - abs(merged_df['RN Diff']) / merged_df['HF RNs']) * 100
+                merged_df['Abs Rev Accuracy'] = (1 - abs(merged_df['Rev Diff']) / merged_df['HF Rev']) * 100
 
-        # Format accuracy percentages as strings with '%' symbol
-        merged_df['Abs RN Accuracy'] = merged_df['Abs RN Accuracy'].map(lambda x: f"{x:.2f}%")
-        merged_df['Abs Rev Accuracy'] = merged_df['Abs Rev Accuracy'].map(lambda x: f"{x:.2f}%")
+                # Format accuracy percentages as strings with '%' symbol
+                merged_df['Abs RN Accuracy'] = merged_df['Abs RN Accuracy'].map(lambda x: f"{x:.2f}%")
+                merged_df['Abs Rev Accuracy'] = merged_df['Abs Rev Accuracy'].map(lambda x: f"{x:.2f}%")
 
-        # Calculate overall accuracies
-        current_date = pd.to_datetime('today').normalize()  # Get the current date without the time part
-        past_mask = merged_df['date'] < current_date
-        future_mask = merged_df['date'] >= current_date
+                # Calculate overall accuracies
+                current_date = pd.to_datetime('today').normalize()  # Get the current date without the time part
+                past_mask = merged_df['date'] < current_date
+                future_mask = merged_df['date'] >= current_date
 
-        past_rooms_accuracy = (1 - (abs(merged_df.loc[past_mask, 'RN Diff']).sum() / merged_df.loc[past_mask, 'HF RNs'].sum())) * 100
-        past_revenue_accuracy = (1 - (abs(merged_df.loc[past_mask, 'Rev Diff']).sum() / merged_df.loc[past_mask, 'HF Rev'].sum())) * 100
-        future_rooms_accuracy = (1 - (abs(merged_df.loc[future_mask, 'RN Diff']).sum() / merged_df.loc[future_mask, 'HF RNs'].sum())) * 100
-        future_revenue_accuracy = (1 - (abs(merged_df.loc[future_mask, 'Rev Diff']).sum() / merged_df.loc[future_mask, 'HF Rev'].sum())) * 100
+                past_rooms_accuracy = (1 - (abs(merged_df.loc[past_mask, 'RN Diff']).sum() / merged_df.loc[past_mask, 'HF RNs'].sum())) * 100
+                past_revenue_accuracy = (1 - (abs(merged_df.loc[past_mask, 'Rev Diff']).sum() / merged_df.loc[past_mask, 'HF Rev'].sum())) * 100
+                future_rooms_accuracy = (1 - (abs(merged_df.loc[future_mask, 'RN Diff']).sum() / merged_df.loc[future_mask, 'HF RNs'].sum())) * 100
+                future_revenue_accuracy = (1 - (abs(merged_df.loc[future_mask, 'Rev Diff']).sum() / merged_df.loc[future_mask, 'HF Rev'].sum())) * 100
 
-        # Display accuracy matrix in a table within a container for width control
-        accuracy_data = {
-            "RNs": [f"{past_rooms_accuracy:.2f}%", f"{future_rooms_accuracy:.2f}%"],
-            "Revenue": [f"{past_revenue_accuracy:.2f}%", f"{future_revenue_accuracy:.2f}%"]
-        }
-        accuracy_df = pd.DataFrame(accuracy_data, index=["Past", "Future"])
+                # Display accuracy matrix in a table within a container for width control
+                accuracy_data = {
+                    "RNs": [f"{past_rooms_accuracy:.2f}%", f"{future_rooms_accuracy:.2f}%"],
+                    "Revenue": [f"{past_revenue_accuracy:.2f}%", f"{future_revenue_accuracy:.2f}%"]
+                }
+                accuracy_df = pd.DataFrame(accuracy_data, index=["Past", "Future"])
 
-        # Center the accuracy matrix table
-        with st.container():
-            st.table(accuracy_df.style.applymap(color_scale).set_table_styles([{"selector": "th", "props": [("backgroundColor", "#f0f2f6")]}]))
+                # Center the accuracy matrix table
+                with st.container():
+                    st.table(accuracy_df.style.applymap(color_scale).set_table_styles([{"selector": "th", "props": [("backgroundColor", "#f0f2f6")]}]))
 
-        # Warning about future discrepancies with matching colors
-        st.warning("Future discrepancies might be a result of timing discrepancies between the moment that the data was received and the moment that the history and forecast file was received.")
+                # Warning about future discrepancies with matching colors
+                st.warning("Future discrepancies might be a result of timing discrepancies between the moment that the data was received and the moment that the history and forecast file was received.")
 
-        # Interactive bar and line chart for visualizing discrepancies
-        fig = make_subplots(specs=[[{"secondary_y": True}]])
+                # Interactive bar and line chart for visualizing discrepancies
+                fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-        # RN Discrepancies - Bar chart
-        fig.add_trace(go.Bar(
-            x=merged_df['date'],
-            y=merged_df['RN Diff'],
-            name='RNs Discrepancy',
-            marker_color='#469798'
-        ), secondary_y=False)
+                # RN Discrepancies - Bar chart
+                fig.add_trace(go.Bar(
+                    x=merged_df['date'],
+                    y=merged_df['RN Diff'],
+                    name='RNs Discrepancy',
+                    marker_color='#469798'
+                ), secondary_y=False)
 
-        # Revenue Discrepancies - Line chart
-        fig.add_trace(go.Scatter(
-            x=merged_df['date'],
-            y=merged_df['Rev Diff'],
-            name='Revenue Discrepancy',
-            mode='lines+markers',
-            line=dict(color='#BF3100', width=2),
-            marker=dict(size=8)
-        ), secondary_y=True)
+                # Revenue Discrepancies - Line chart
+                fig.add_trace(go.Scatter(
+                    x=merged_df['date'],
+                    y=merged_df['Rev Diff'],
+                    name='Revenue Discrepancy',
+                    mode='lines+markers',
+                    line=dict(color='#BF3100', width=2),
+                    marker=dict(size=8)
+                ), secondary_y=True)
 
-        # Update plot layout for dynamic axis scaling and increased height
-        max_room_discrepancy = merged_df['RN Diff'].abs().max()
-        max_revenue_discrepancy = merged_df['Rev Diff'].abs().max()
+                # Update plot layout for dynamic axis scaling and increased height
+                max_room_discrepancy = merged_df['RN Diff'].abs().max()
+                max_revenue_discrepancy = merged_df['Rev Diff'].abs().max()
 
-        fig.update_layout(
-            height=600,
-            title='RNs and Revenue Discrepancy Over Time',
-            xaxis_title='Date',
-            yaxis_title='RNs Discrepancy',
-            yaxis2_title='Revenue Discrepancy',
-            yaxis=dict(range=[-max_room_discrepancy, max_room_discrepancy]),
-            yaxis2=dict(range=[-max_revenue_discrepancy, max_revenue_discrepancy]),
-            legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01)
-        )
+                fig.update_layout(
+                    height=600,
+                    title='RNs and Revenue Discrepancy Over Time',
+                    xaxis_title='Date',
+                    yaxis_title='RNs Discrepancy',
+                    yaxis2_title='Revenue Discrepancy',
+                    yaxis=dict(range=[-max_room_discrepancy, max_room_discrepancy]),
+                    yaxis2=dict(range=[-max_revenue_discrepancy, max_revenue_discrepancy]),
+                    legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01)
+                )
 
-        # Align grid lines
-        fig.update_yaxes(matches=None, showgrid=True, gridwidth=1, gridcolor='grey')
+                # Align grid lines
+                fig.update_yaxes(matches=None, showgrid=True, gridwidth=1, gridcolor='grey')
 
-        st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, use_container_width=True)
 
-        # Display daily variance detail in a table
-        st.markdown("### Daily Variance Detail", unsafe_allow_html=True)
-        detail_container = st.container()
-        with detail_container:
-            formatted_df = merged_df[['date', 'HF RNs', 'HF Rev', 'Juyo RN', 'Juyo Rev', 'RN Diff', 'Rev Diff', 'Abs RN Accuracy', 'Abs Rev Accuracy']]
-            styled_df = formatted_df.style.applymap(color_scale, subset=['Abs RN Accuracy', 'Abs Rev Accuracy']).set_properties(**{'text-align': 'center'})
-            st.table(styled_df)
+                # Display daily variance detail in a table
+                st.markdown("### Daily Variance Detail", unsafe_allow_html=True)
+                detail_container = st.container()
+                with detail_container:
+                    formatted_df = merged_df[['date', 'HF RNs', 'HF Rev', 'Juyo RN', 'Juyo Rev', 'RN Diff', 'Rev Diff', 'Abs RN Accuracy', 'Abs Rev Accuracy']]
+                    styled_df = formatted_df.style.applymap(color_scale, subset=['Abs RN Accuracy', 'Abs Rev Accuracy']).set_properties(**{'text-align': 'center'})
+                    st.table(styled_df)
 
-        # Combine past and future data for export
-        combined_df = pd.concat([formatted_df[past_mask], formatted_df[future_mask]])
+                # Combine past and future data for export
+                combined_df = pd.concat([formatted_df[past_mask], formatted_df[future_mask]])
 
-        # Extract the filename prefix from the uploaded CSV
-        csv_filename = csv_file.name.split('_')[0]
-        current_time = datetime.now().strftime('%Y%m%d_%H%M%S')
-        base_filename = f"{csv_filename}_AccuracyCheck_{current_time}"
+                # Extract the filename prefix from the uploaded CSV
+                csv_filename = csv_file.name.split('_')[0]
+                current_time = datetime.now().strftime('%Y%m%d_%H%M%S')
+                base_filename = f"{csv_filename}_AccuracyCheck_{current_time}"
 
-        # Add Excel export functionality
-        output, filename = create_excel_download(combined_df, base_filename,
-                                                 past_rooms_accuracy, past_revenue_accuracy,
-                                                 future_rooms_accuracy, future_revenue_accuracy)
-        st.download_button(label="Download Excel Report",
-                           data=output,
-                           file_name=f"{filename}.xlsx",
-                           mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                # Add Excel export functionality
+                output, filename = create_excel_download(combined_df, base_filename,
+                                                         past_rooms_accuracy, past_revenue_accuracy,
+                                                         future_rooms_accuracy, future_revenue_accuracy)
+                st.download_button(label="Download Excel Report",
+                                   data=output,
+                                   file_name=f"{filename}.xlsx",
+                                   mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 if __name__ == "__main__":
     main()
