@@ -56,6 +56,7 @@ def color_scale(val):
             return 'background-color: #BF3100; color: white;'  # red
     return ''
 # Function to create Excel file for download with color formatting and accuracy matrix
+# Function to create Excel file for download with color formatting and accuracy matrix
 def create_excel_download(combined_df, base_filename, past_accuracy_rn, past_accuracy_rev, future_accuracy_rn, future_accuracy_rev):
     output = BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
@@ -119,6 +120,7 @@ def create_excel_download(combined_df, base_filename, past_accuracy_rn, past_acc
                                                   {'type': 'cell', 'criteria': '>=', 'value': 0.98, 'format': format_green})
     output.seek(0)
     return output, base_filename
+
 # Streamlit application
 def main():
     # Center the title using markdown with HTML
