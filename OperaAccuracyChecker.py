@@ -70,7 +70,7 @@ def create_excel_download(combined_df, base_filename, past_accuracy_rn, past_acc
         })
         
         accuracy_matrix.to_excel(writer, sheet_name='Accuracy Matrix', index=False, startrow=1)
-        worksheet = writer.sheets['Accuracy Matrix']
+        worksheet_accuracy = writer.sheets['Accuracy Matrix']
 
         # Define custom formats and colors
         format_green = workbook.add_format({'bg_color': '#469798', 'font_color': '#FFFFFF'})
@@ -79,21 +79,21 @@ def create_excel_download(combined_df, base_filename, past_accuracy_rn, past_acc
         format_percent = workbook.add_format({'num_format': '0.00%'})  # Percentage format
 
         # Apply percentage format to the relevant cells in Accuracy Matrix
-        worksheet.set_column('B:C', None, format_percent)  # Set percentage format for both Past and Future columns
+        worksheet_accuracy.set_column('B:C', None, format_percent)  # Set percentage format for both Past and Future columns
 
         # Apply conditional formatting for Accuracy Matrix
-        worksheet.conditional_format('B3:B4', {'type': 'cell', 'criteria': '<', 'value': 0.96, 'format': format_red})
-        worksheet.conditional_format('B3:B4', {'type': 'cell', 'criteria': 'between', 'minimum': 0.96, 'maximum': 0.9799, 'format': format_yellow})
-        worksheet.conditional_format('B3:B4', {'type': 'cell', 'criteria': '>=', 'value': 0.98, 'format': format_green})
-        worksheet.conditional_format('C3:C4', {'type': 'cell', 'criteria': '<', 'value': 0.96, 'format': format_red})
-        worksheet.conditional_format('C3:C4', {'type': 'cell', 'criteria': 'between', 'minimum': 0.96, 'maximum': 0.9799, 'format': format_yellow})
-        worksheet.conditional_format('C3:C4', {'type': 'cell', 'criteria': '>=', 'value': 0.98, 'format': format_green})
+        worksheet_accuracy.conditional_format('B3:B4', {'type': 'cell', 'criteria': '<', 'value': 0.96, 'format': format_red})
+        worksheet_accuracy.conditional_format('B3:B4', {'type': 'cell', 'criteria': 'between', 'minimum': 0.96, 'maximum': 0.9799, 'format': format_yellow})
+        worksheet_accuracy.conditional_format('B3:B4', {'type': 'cell', 'criteria': '>=', 'value': 0.98, 'format': format_green})
+        worksheet_accuracy.conditional_format('C3:C4', {'type': 'cell', 'criteria': '<', 'value': 0.96, 'format': format_red})
+        worksheet_accuracy.conditional_format('C3:C4', {'type': 'cell', 'criteria': 'between', 'minimum': 0.96, 'maximum': 0.9799, 'format': format_yellow})
+        worksheet_accuracy.conditional_format('C3:C4', {'type': 'cell', 'criteria': '>=', 'value': 0.98, 'format': format_green})
 
-        # Write the combined past and future results to the "Daily Variance Detail" sheet
+        # Write the combined past and future results to a single sheet
         if not combined_df.empty:
             # Ensure percentage columns are properly formatted as decimals
-            combined_df['Abs RN Accuracy'] = combined_df['Abs RN Accuracy'].astype(float)
-            combined_df['Abs Rev Accuracy'] = combined_df['Abs Rev Accuracy'].astype(float)
+            combined_df['Abs RN Accuracy'] = combined_df['Abs RN Accuracy'].str.rstrip('%').astype('float') / 100
+            combined_df['Abs Rev Accuracy'] = combined_df['Abs Rev Accuracy'].str.rstrip('%').astype('float') / 100
 
             combined_df.to_excel(writer, sheet_name='Daily Variance Detail', index=False)
             worksheet_combined = writer.sheets['Daily Variance Detail']
@@ -129,6 +129,7 @@ def create_excel_download(combined_df, base_filename, past_accuracy_rn, past_acc
 
     output.seek(0)
     return output, base_filename
+
 
 
 # Streamlit application
