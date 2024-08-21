@@ -57,6 +57,7 @@ def color_scale(val):
     return ''
 # Function to create Excel file for download with color formatting and accuracy matrix
 # Function to create Excel file for download with color formatting and accuracy matrix
+# Function to create Excel file for download with color formatting and accuracy matrix
 def create_excel_download(combined_df, base_filename, past_accuracy_rn, past_accuracy_rev, future_accuracy_rn, future_accuracy_rev):
     output = BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
@@ -77,10 +78,12 @@ def create_excel_download(combined_df, base_filename, past_accuracy_rn, past_acc
         format_float = workbook.add_format({'num_format': '0.00'})  # Floats
         format_number = workbook.add_format({'num_format': '#,##0.00'})  # Number with thousands separator and two decimals
         format_percent = workbook.add_format({'num_format': '0.00%'})  # Percentage format
+        
         # Apply percentage format to the relevant cells in Accuracy Matrix
         worksheet.set_column('B:B', None, format_percent)
         worksheet.set_column('C:C', None, format_percent)
-        # Apply simplified conditional formatting for Accuracy Matrix
+        
+        # Apply conditional formatting for Accuracy Matrix
         format_green = workbook.add_format({'bg_color': '#469798', 'font_color': '#FFFFFF'})
         format_yellow = workbook.add_format({'bg_color': '#F2A541', 'font_color': '#FFFFFF'})
         format_red = workbook.add_format({'bg_color': '#BF3100', 'font_color': '#FFFFFF'})
@@ -91,6 +94,7 @@ def create_excel_download(combined_df, base_filename, past_accuracy_rn, past_acc
         worksheet.conditional_format('C3:C4', {'type': 'cell', 'criteria': '<', 'value': 0.96, 'format': format_red})
         worksheet.conditional_format('C3:C4', {'type': 'cell', 'criteria': 'between', 'minimum': 0.96, 'maximum': 0.9799, 'format': format_yellow})
         worksheet.conditional_format('C3:C4', {'type': 'cell', 'criteria': '>=', 'value': 0.98, 'format': format_green})
+        
         # Write the combined past and future results to a single sheet
         if not combined_df.empty:
             combined_df.to_excel(writer, sheet_name='Daily Variance Detail', index=False)
@@ -105,6 +109,7 @@ def create_excel_download(combined_df, base_filename, past_accuracy_rn, past_acc
             worksheet_combined.set_column('G:G', None, format_float)   # Floats
             worksheet_combined.set_column('H:H', None, format_percent) # Percentages
             worksheet_combined.set_column('I:I', None, format_percent) # Percentages
+            
             # Apply conditional formatting to the percentage columns (H and I)
             worksheet_combined.conditional_format('H2:H{}'.format(len(combined_df) + 1),
                                                   {'type': 'cell', 'criteria': '<', 'value': 0.96, 'format': format_red})
