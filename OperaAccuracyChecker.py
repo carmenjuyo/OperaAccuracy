@@ -65,6 +65,10 @@ def create_excel_download(combined_df, base_filename, past_accuracy_rn, past_acc
         format_number = workbook.add_format({'num_format': '#,##0.00'})  # Number with thousands separator and two decimals
         format_percent = workbook.add_format({'num_format': '0.00%'})  # Percentage format
 
+        # Apply percentage format to the relevant cells in Accuracy Matrix
+        worksheet.set_column('B:B', None, format_percent)
+        worksheet.set_column('C:C', None, format_percent)
+
         # Apply simplified conditional formatting for Accuracy Matrix
         format_green = workbook.add_format({'bg_color': '#469798', 'font_color': '#FFFFFF'})
         format_yellow = workbook.add_format({'bg_color': '#F2A541', 'font_color': '#FFFFFF'})
@@ -240,8 +244,12 @@ def main():
         # Combine past and future data for export
         combined_df = pd.concat([formatted_df[past_mask], formatted_df[future_mask]])
 
+        # Extract the filename prefix from the uploaded CSV
+        csv_filename = csv_file.name.split('_')[0]
+        current_time = datetime.now().strftime('%Y%m%d_%H%M%S')
+        base_filename = f"{csv_filename}_AccuracyCheck_{current_time}"
+
         # Add Excel export functionality
-        base_filename = "Opera_Daily_Variance_Accuracy"
         output, filename = create_excel_download(combined_df, base_filename,
                                                  past_rooms_accuracy, past_revenue_accuracy,
                                                  future_rooms_accuracy, future_revenue_accuracy)
