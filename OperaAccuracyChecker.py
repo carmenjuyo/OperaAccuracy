@@ -62,17 +62,22 @@ def create_excel_download(combined_df, base_filename, past_accuracy_rn, past_acc
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         workbook = writer.book
         
+        # Define formats
+        format_date = workbook.add_format({'num_format': 'dd-mmm-yyyy'})
+        format_whole = workbook.add_format({'num_format': '0'})  # Whole numbers
+        format_float = workbook.add_format({'num_format': '0.00'})  # Floats
+        format_number = workbook.add_format({'num_format': '#,##0.00'})  # Number with thousands separator and two decimals
+        format_percent = workbook.add_format({'num_format': '0.00%'})  # Percentage format
+        
+        # Define color formats
+        format_red = workbook.add_format({'bg_color': '#FF0000', 'font_color': '#FFFFFF'})   # Red background, white text
+        format_yellow = workbook.add_format({'bg_color': '#FFFF00', 'font_color': '#000000'}) # Yellow background, black text
+        format_green = workbook.add_format({'bg_color': '#00FF00', 'font_color': '#000000'})  # Green background, black text
+
         # Write the combined past and future results to a single sheet
         if not combined_df.empty:
             combined_df.to_excel(writer, sheet_name='Daily Variance Detail', index=False)
             worksheet_combined = writer.sheets['Daily Variance Detail']
-            
-            # Define formats
-            format_date = workbook.add_format({'num_format': 'dd-mmm-yyyy'})
-            format_whole = workbook.add_format({'num_format': '0'})  # Whole numbers
-            format_float = workbook.add_format({'num_format': '0.00'})  # Floats
-            format_number = workbook.add_format({'num_format': '#,##0.00'})  # Number with thousands separator and two decimals
-            format_percent = workbook.add_format({'num_format': '0.00%'})  # Percentage format
             
             # Format columns
             worksheet_combined.set_column('A:A', None, format_date)    # Date
