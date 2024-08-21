@@ -4,22 +4,16 @@ from xml.etree import ElementTree
 from datetime import datetime
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
+from io import BytesIO
 
 # Set page layout to wide
 st.set_page_config(layout="wide", page_title="Opera Daily Variance and Accuracy Calculator")
 
 # Define the function to parse the XML
-def parse_xml(xml_content, file_name):
+def parse_xml(xml_content):
     tree = ElementTree.fromstring(xml_content)
     data = []
-    system_time_elem = tree.find('G_RESORT/SYSTEM_TIME')
-    
-    if system_time_elem is not None:
-        system_time = datetime.strptime(system_time_elem.text, "%d-%b-%y %H:%M:%S")
-    else:
-        # Extract date from the file name
-        system_time = datetime.strptime(file_name.split('_')[0], "%Y%m%d")
-
+    system_time = datetime.strptime(tree.find('G_RESORT/SYSTEM_TIME').text, "%d-%b-%y %H:%M:%S")
     for g_considered_date in tree.iter('G_CONSIDERED_DATE'):
         date = g_considered_date.find('CONSIDERED_DATE').text
         ind_deduct_rooms = int(g_considered_date.find('IND_DEDUCT_ROOMS').text)
@@ -48,6 +42,79 @@ def color_scale(val):
             return 'background-color: #BF3100; color: white;'  # red
     return ''
 
+# Function to create Excel file for download with color formatting and accuracy matrix
+def create_excel_download(combined_df, base_filename, past_accuracy_rn, past_accuracy_rev, future_accuracy_rn, future_accuracy_rev):
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        workbook = writer.book
+        
+        # Write the Accuracy Matrix
+        accuracy_matrix = pd.DataFrame({
+            'Metric': ['RNs', 'Revenue'],
+            'Past': [past_accuracy_rn / 100, past_accuracy_rev / 100],  # Store as decimal
+            'Future': [future_accuracy_rn / 100, future_accuracy_rev / 100]  # Store as decimal
+        })
+        
+        accuracy_matrix.to_excel(writer, sheet_name='Accuracy Matrix', index=False, startrow=1)
+        worksheet = writer.sheets['Accuracy Matrix']
+
+        # Define formats
+        format_date = workbook.add_format({'num_format': 'dd-mmm-yyyy'})
+        format_whole = workbook.add_format({'num_format': '0'})  # Whole numbers
+        format_float = workbook.add_format({'num_format': '0.00'})  # Floats
+        format_number = workbook.add_format({'num_format': '#,##0.00'})  # Number with thousands separator and two decimals
+        format_percent = workbook.add_format({'num_format': '0.00%'})  # Percentage format
+
+        # Apply percentage format to the relevant cells in Accuracy Matrix
+        worksheet.set_column('B:B', None, format_percent)
+        worksheet.set_column('C:C', None, format_percent)
+
+        # Apply simplified conditional formatting for Accuracy Matrix
+        format_green = workbook.add_format({'bg_color': '#469798', 'font_color': '#FFFFFF'})
+        format_yellow = workbook.add_format({'bg_color': '#F2A541', 'font_color': '#FFFFFF'})
+        format_red = workbook.add_format({'bg_color': '#BF3100', 'font_color': '#FFFFFF'})
+        
+        worksheet.conditional_format('B3:B4', {'type': 'cell', 'criteria': '<', 'value': 0.96, 'format': format_red})
+        worksheet.conditional_format('B3:B4', {'type': 'cell', 'criteria': 'between', 'minimum': 0.96, 'maximum': 0.9799, 'format': format_yellow})
+        worksheet.conditional_format('B3:B4', {'type': 'cell', 'criteria': '>=', 'value': 0.98, 'format': format_green})
+
+        worksheet.conditional_format('C3:C4', {'type': 'cell', 'criteria': '<', 'value': 0.96, 'format': format_red})
+        worksheet.conditional_format('C3:C4', {'type': 'cell', 'criteria': 'between', 'minimum': 0.96, 'maximum': 0.9799, 'format': format_yellow})
+        worksheet.conditional_format('C3:C4', {'type': 'cell', 'criteria': '>=', 'value': 0.98, 'format': format_green})
+
+        # Write the combined past and future results to a single sheet
+        if not combined_df.empty:
+            combined_df.to_excel(writer, sheet_name='Daily Variance Detail', index=False)
+            worksheet_combined = writer.sheets['Daily Variance Detail']
+
+            # Format columns
+            worksheet_combined.set_column('A:A', None, format_date)    # Date
+            worksheet_combined.set_column('B:B', None, format_whole)   # Whole numbers
+            worksheet_combined.set_column('C:C', None, format_float)   # Floats
+            worksheet_combined.set_column('D:D', None, format_number)  # Numbers
+            worksheet_combined.set_column('E:E', None, format_float)   # Floats
+            worksheet_combined.set_column('F:F', None, format_number)  # Numbers
+            worksheet_combined.set_column('G:G', None, format_float)   # Floats
+            worksheet_combined.set_column('H:H', None, format_percent) # Percentages
+            worksheet_combined.set_column('I:I', None, format_percent) # Percentages
+
+            # Apply conditional formatting to the percentage columns (H and I)
+            worksheet_combined.conditional_format('H2:H{}'.format(len(combined_df) + 1),
+                                                  {'type': 'cell', 'criteria': '<', 'value': 0.96, 'format': format_red})
+            worksheet_combined.conditional_format('H2:H{}'.format(len(combined_df) + 1),
+                                                  {'type': 'cell', 'criteria': 'between', 'minimum': 0.96, 'maximum': 0.9799, 'format': format_yellow})
+            worksheet_combined.conditional_format('H2:H{}'.format(len(combined_df) + 1),
+                                                  {'type': 'cell', 'criteria': '>=', 'value': 0.98, 'format': format_green})
+
+            worksheet_combined.conditional_format('I2:I{}'.format(len(combined_df) + 1),
+                                                  {'type': 'cell', 'criteria': '<', 'value': 0.96, 'format': format_red})
+            worksheet_combined.conditional_format('I2:I{}'.format(len(combined_df) + 1),
+                                                  {'type': 'cell', 'criteria': 'between', 'minimum': 0.96, 'maximum': 0.9799, 'format': format_yellow})
+            worksheet_combined.conditional_format('I2:I{}'.format(len(combined_df) + 1),
+                                                  {'type': 'cell', 'criteria': '>=', 'value': 0.98, 'format': format_green})
+    output.seek(0)
+    return output, base_filename
+
 # Streamlit application
 def main():
     # Center the title using markdown with HTML
@@ -65,19 +132,11 @@ def main():
 
     # When files are uploaded
     if xml_files and csv_file:
-        # Initialize progress bar
-        progress_bar = st.progress(0)
-        progress_step = 1 / len(xml_files)
-        
         # Process XML files and combine them into a single DataFrame
         combined_xml_df = pd.DataFrame()
-        for i, xml_file in enumerate(xml_files):
-            xml_df = parse_xml(xml_file.getvalue(), xml_file.name)
+        for xml_file in xml_files:
+            xml_df = parse_xml(xml_file.getvalue())
             combined_xml_df = pd.concat([combined_xml_df, xml_df])
-            progress_bar.progress((i + 1) * progress_step)
-        
-        # Remove progress bar when done
-        progress_bar.empty()
 
         # Keep only the latest entry for each considered date
         combined_xml_df = combined_xml_df.sort_values(by=['date', 'system_time'], ascending=[True, False])
@@ -181,6 +240,23 @@ def main():
             formatted_df = merged_df[['date', 'HF RNs', 'HF Rev', 'Juyo RN', 'Juyo Rev', 'RN Diff', 'Rev Diff', 'Abs RN Accuracy', 'Abs Rev Accuracy']]
             styled_df = formatted_df.style.applymap(color_scale, subset=['Abs RN Accuracy', 'Abs Rev Accuracy']).set_properties(**{'text-align': 'center'})
             st.table(styled_df)
+
+        # Combine past and future data for export
+        combined_df = pd.concat([formatted_df[past_mask], formatted_df[future_mask]])
+
+        # Extract the filename prefix from the uploaded CSV
+        csv_filename = csv_file.name.split('_')[0]
+        current_time = datetime.now().strftime('%Y%m%d_%H%M%S')
+        base_filename = f"{csv_filename}_AccuracyCheck_{current_time}"
+
+        # Add Excel export functionality
+        output, filename = create_excel_download(combined_df, base_filename,
+                                                 past_rooms_accuracy, past_revenue_accuracy,
+                                                 future_rooms_accuracy, future_revenue_accuracy)
+        st.download_button(label="Download Excel Report",
+                           data=output,
+                           file_name=f"{filename}.xlsx",
+                           mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 if __name__ == "__main__":
     main()
