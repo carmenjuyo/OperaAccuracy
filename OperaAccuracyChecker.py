@@ -43,7 +43,7 @@ def color_scale(val):
     return ''
 
 # Function to create Excel file for download with color formatting and accuracy matrix
-def create_excel_download(results_df, future_results_df, base_filename, past_accuracy_rn, past_accuracy_rev, future_accuracy_rn, future_accuracy_rev):
+def create_excel_download(past_df, future_df, base_filename, past_accuracy_rn, past_accuracy_rev, future_accuracy_rn, future_accuracy_rev):
     output = BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         workbook = writer.book
@@ -76,13 +76,9 @@ def create_excel_download(results_df, future_results_df, base_filename, past_acc
         worksheet.conditional_format('C3:C4', {'type': 'cell', 'criteria': 'between', 'minimum': 0.96, 'maximum': 0.9799, 'format': format_yellow})
         worksheet.conditional_format('C3:C4', {'type': 'cell', 'criteria': '>=', 'value': 0.98, 'format': format_green})
 
-        # Write past and future results to separate sheets
-        if not results_df.empty:
-            # Ensure percentage columns are properly formatted as decimals
-            results_df['Abs RN Accuracy'] = results_df['Abs RN Accuracy'].str.rstrip('%').astype(float) / 100
-            results_df['Abs Rev Accuracy'] = results_df['Abs Rev Accuracy'].str.rstrip('%').astype(float) / 100
-
-            results_df.to_excel(writer, sheet_name='Past Accuracy', index=False)
+        # Write past results to a sheet
+        if not past_df.empty:
+            past_df.to_excel(writer, sheet_name='Past Accuracy', index=False)
             worksheet_past = writer.sheets['Past Accuracy']
 
             # Define formats
@@ -101,26 +97,23 @@ def create_excel_download(results_df, future_results_df, base_filename, past_acc
             worksheet_past.set_column('I:I', None, format_percent)  # Percentage
 
             # Apply simplified conditional formatting to percentages in columns E and I
-            worksheet_past.conditional_format('E2:E{}'.format(len(results_df) + 1),
+            worksheet_past.conditional_format('E2:E{}'.format(len(past_df) + 1),
                                               {'type': 'cell', 'criteria': '<', 'value': 0.96, 'format': format_red})
-            worksheet_past.conditional_format('E2:E{}'.format(len(results_df) + 1),
+            worksheet_past.conditional_format('E2:E{}'.format(len(past_df) + 1),
                                               {'type': 'cell', 'criteria': 'between', 'minimum': 0.96, 'maximum': 0.9799, 'format': format_yellow})
-            worksheet_past.conditional_format('E2:E{}'.format(len(results_df) + 1),
+            worksheet_past.conditional_format('E2:E{}'.format(len(past_df) + 1),
                                               {'type': 'cell', 'criteria': '>=', 'value': 0.98, 'format': format_green})
 
-            worksheet_past.conditional_format('I2:I{}'.format(len(results_df) + 1),
+            worksheet_past.conditional_format('I2:I{}'.format(len(past_df) + 1),
                                               {'type': 'cell', 'criteria': '<', 'value': 0.96, 'format': format_red})
-            worksheet_past.conditional_format('I2:I{}'.format(len(results_df) + 1),
+            worksheet_past.conditional_format('I2:I{}'.format(len(past_df) + 1),
                                               {'type': 'cell', 'criteria': 'between', 'minimum': 0.96, 'maximum': 0.9799, 'format': format_yellow})
-            worksheet_past.conditional_format('I2:I{}'.format(len(results_df) + 1),
+            worksheet_past.conditional_format('I2:I{}'.format(len(past_df) + 1),
                                               {'type': 'cell', 'criteria': '>=', 'value': 0.98, 'format': format_green})
 
-        if not future_results_df.empty:
-            # Ensure percentage columns are properly formatted as decimals
-            future_results_df['Abs RN Accuracy'] = future_results_df['Abs RN Accuracy'].str.rstrip('%').astype(float) / 100
-            future_results_df['Abs Rev Accuracy'] = future_results_df['Abs Rev Accuracy'].str.rstrip('%').astype(float) / 100
-
-            future_results_df.to_excel(writer, sheet_name='Future Accuracy', index=False)
+        # Write future results to a sheet
+        if not future_df.empty:
+            future_df.to_excel(writer, sheet_name='Future Accuracy', index=False)
             worksheet_future = writer.sheets['Future Accuracy']
 
             # Format columns
@@ -134,18 +127,18 @@ def create_excel_download(results_df, future_results_df, base_filename, past_acc
             worksheet_future.set_column('I:I', None, format_percent)  # Percentage
 
             # Apply simplified conditional formatting to percentages in columns E and I
-            worksheet_future.conditional_format('E2:E{}'.format(len(future_results_df) + 1),
+            worksheet_future.conditional_format('E2:E{}'.format(len(future_df) + 1),
                                                 {'type': 'cell', 'criteria': '<', 'value': 0.96, 'format': format_red})
-            worksheet_future.conditional_format('E2:E{}'.format(len(future_results_df) + 1),
+            worksheet_future.conditional_format('E2:E{}'.format(len(future_df) + 1),
                                                 {'type': 'cell', 'criteria': 'between', 'minimum': 0.96, 'maximum': 0.9799, 'format': format_yellow})
-            worksheet_future.conditional_format('E2:E{}'.format(len(future_results_df) + 1),
+            worksheet_future.conditional_format('E2:E{}'.format(len(future_df) + 1),
                                                 {'type': 'cell', 'criteria': '>=', 'value': 0.98, 'format': format_green})
 
-            worksheet_future.conditional_format('I2:I{}'.format(len(future_results_df) + 1),
+            worksheet_future.conditional_format('I2:I{}'.format(len(future_df) + 1),
                                                 {'type': 'cell', 'criteria': '<', 'value': 0.96, 'format': format_red})
-            worksheet_future.conditional_format('I2:I{}'.format(len(future_results_df) + 1),
+            worksheet_future.conditional_format('I2:I{}'.format(len(future_df) + 1),
                                                 {'type': 'cell', 'criteria': 'between', 'minimum': 0.96, 'maximum': 0.9799, 'format': format_yellow})
-            worksheet_future.conditional_format('I2:I{}'.format(len(future_results_df) + 1),
+            worksheet_future.conditional_format('I2:I{}'.format(len(future_df) + 1),
                                                 {'type': 'cell', 'criteria': '>=', 'value': 0.98, 'format': format_green})
     output.seek(0)
     return output, base_filename
