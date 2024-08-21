@@ -51,8 +51,7 @@ def parse_xml(xml_content, filename):
 # Define color coding for accuracy values
 def color_scale(val):
     """Color scale for percentages."""
-    if isinstance(val, str) and '%' in val:
-        val = float(val.strip('%'))
+    if isinstance(val, (int, float)):
         if val >= 98:
             return 'background-color: #469798; color: white;'  # green
         elif 95 <= val < 98:
@@ -194,9 +193,9 @@ def main():
                         merged_df['Abs RN Accuracy'] = (1 - abs(merged_df['RN Diff']) / merged_df['HF RNs']) * 100
                         merged_df['Abs Rev Accuracy'] = (1 - abs(merged_df['Rev Diff']) / merged_df['HF Rev']) * 100
 
-                        # Format accuracy percentages as strings with '%' symbol
-                        merged_df['Abs RN Accuracy'] = merged_df['Abs RN Accuracy'].map(lambda x: f"{x:.2f}%")
-                        merged_df['Abs Rev Accuracy'] = merged_df['Abs Rev Accuracy'].map(lambda x: f"{x:.2f}%")
+                        # Keep the accuracy values as floats
+                        merged_df['Abs RN Accuracy'] = merged_df['Abs RN Accuracy']
+                        merged_df['Abs Rev Accuracy'] = merged_df['Abs Rev Accuracy']
 
                         # Calculate overall accuracies
                         current_date = pd.to_datetime('today').normalize()  # Get the current date without the time part
@@ -210,8 +209,8 @@ def main():
 
                         # Display accuracy matrix in a table within a container for width control
                         accuracy_data = {
-                            "RNs": [f"{past_rooms_accuracy:.2f}%", f"{future_rooms_accuracy:.2f}%"],
-                            "Revenue": [f"{past_revenue_accuracy:.2f}%", f"{future_revenue_accuracy:.2f}%"]
+                            "RNs": [past_rooms_accuracy, future_rooms_accuracy],
+                            "Revenue": [past_revenue_accuracy, future_revenue_accuracy]
                         }
                         accuracy_df = pd.DataFrame(accuracy_data, index=["Past", "Future"])
 
