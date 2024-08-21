@@ -10,10 +10,31 @@ from io import BytesIO
 st.set_page_config(layout="wide", page_title="Opera Daily Variance and Accuracy Calculator")
 
 # Define the function to parse the XML
-def parse_xml(xml_content):
+def parse_xml(xml_file):
+    # Extract the filename and attempt to parse the date from it
+    filename = xml_file.name
+    try:
+        file_date = datetime.strptime(filename.split('_')[0], "%Y%m%d")
+    except ValueError:
+        # Handle the case where the date format in the filename is incorrect
+        file_date = None
+
+    # Parse the XML content
+    xml_content = xml_file.getvalue()
     tree = ElementTree.fromstring(xml_content)
+    
+    # Attempt to find the SYSTEM_TIME element
+    system_time_element = tree.find('G_RESORT/SYSTEM_TIME')
+    if system_time_element is not None:
+        system_time = datetime.strptime(system_time_element.text, "%d-%b-%y %H:%M:%S")
+    else:
+        # Use the file_date if SYSTEM_TIME is missing
+        if file_date:
+            system_time = file_date
+        else:
+            raise ValueError("Both SYSTEM_TIME and a valid date in the filename are missing.")
+
     data = []
-    system_time = datetime.strptime(tree.find('G_RESORT/SYSTEM_TIME').text, "%d-%b-%y %H:%M:%S")
     for g_considered_date in tree.iter('G_CONSIDERED_DATE'):
         date = g_considered_date.find('CONSIDERED_DATE').text
         ind_deduct_rooms = int(g_considered_date.find('IND_DEDUCT_ROOMS').text)
