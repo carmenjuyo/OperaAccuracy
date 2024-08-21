@@ -87,9 +87,9 @@ def create_excel_download(combined_df, base_filename, past_accuracy_rn, past_acc
             worksheet_combined.set_column('A:A', None, format_date)    # Date
             worksheet_combined.set_column('B:B', None, format_whole)   # Whole numbers
             worksheet_combined.set_column('C:C', None, format_float)   # Floats
-            worksheet_combined.set_column('D:D', None, format_whole)  # Whole numbers
+            worksheet_combined.set_column('D:D', None, format_number)  # Numbers
             worksheet_combined.set_column('E:E', None, format_float)   # Floats
-            worksheet_combined.set_column('F:F', None, format_whole)  # Whole numbers
+            worksheet_combined.set_column('F:F', None, format_number)  # Numbers
             worksheet_combined.set_column('G:G', None, format_float)   # Floats
             worksheet_combined.set_column('H:H', None, format_percent) # Percentages
             worksheet_combined.set_column('I:I', None, format_percent) # Percentages
@@ -237,16 +237,22 @@ def main():
             styled_df = formatted_df.style.applymap(color_scale, subset=['Abs RN Accuracy', 'Abs Rev Accuracy']).set_properties(**{'text-align': 'center'})
             st.table(styled_df)
 
-        # Add Excel export functionality
-        st.markdown("### Export Results", unsafe_allow_html=True)
-        base_filename = "Opera_Daily_Variance_Accuracy"
-        output, filename = create_excel_download(formatted_df[past_mask], formatted_df[future_mask], base_filename,
-                                                 past_rooms_accuracy, past_revenue_accuracy,
-                                                 future_rooms_accuracy, future_revenue_accuracy)
-        st.download_button(label="Download Excel Report",
-                           data=output,
-                           file_name=f"{filename}.xlsx",
-                           mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        # Check if the past and future DataFrames are not empty
+        if not formatted_df[past_mask].empty and not formatted_df[future_mask].empty:
+            combined_df = pd.concat([formatted_df[past_mask], formatted_df[future_mask]])
+            st.write("Combined DataFrame:", combined_df)
+            
+            # Add Excel export functionality
+            base_filename = "Opera_Daily_Variance_Accuracy"
+            output, filename = create_excel_download(combined_df, base_filename,
+                                                     past_rooms_accuracy, past_revenue_accuracy,
+                                                     future_rooms_accuracy, future_revenue_accuracy)
+            st.download_button(label="Download Excel Report",
+                               data=output,
+                               file_name=f"{filename}.xlsx",
+                               mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        else:
+            st.error("No data available for past or future accuracy calculations.")
 
 if __name__ == "__main__":
     main()
