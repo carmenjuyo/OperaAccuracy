@@ -23,7 +23,7 @@ def parse_xml(xml_content, filename):
     
     # Attempt to find the SYSTEM_TIME element
     system_time_element = tree.find('G_RESORT/SYSTEM_TIME')
-    if system_time_element is not None:
+    if (system_time_element is not None):
         system_time = datetime.strptime(system_time_element.text, "%d-%b-%y %H:%M:%S")
     else:
         # Use the file_date if SYSTEM_TIME is missing
@@ -188,9 +188,16 @@ def main():
         merged_df['RN Diff'] = merged_df['Juyo RN'] - merged_df['HF RNs']
         merged_df['Rev Diff'] = merged_df['Juyo Rev'] - merged_df['HF Rev']
         
-        # Calculate absolute accuracy percentages
-        merged_df['Abs RN Accuracy'] = (1 - abs(merged_df['RN Diff']) / merged_df['HF RNs']) * 100
-        merged_df['Abs Rev Accuracy'] = (1 - abs(merged_df['Rev Diff']) / merged_df['HF Rev']) * 100
+        # Calculate absolute accuracy percentages with handling for 0/0 cases
+        merged_df['Abs RN Accuracy'] = merged_df.apply(
+            lambda row: 100.0 if row['HF RNs'] == 0 and row['Juyo RN'] == 0 else (1 - abs(row['RN Diff']) / row['HF RNs']) * 100,
+            axis=1
+        )
+
+        merged_df['Abs Rev Accuracy'] = merged_df.apply(
+            lambda row: 100.0 if row['HF Rev'] == 0 and row['Juyo Rev'] == 0 else (1 - abs(row['Rev Diff']) / row['HF Rev']) * 100,
+            axis=1
+        )
         
         # Format accuracy percentages as strings with '%' symbol
         merged_df['Abs RN Accuracy'] = merged_df['Abs RN Accuracy'].map(lambda x: f"{x:.2f}%")
