@@ -190,15 +190,17 @@ def main():
         
         # Calculate absolute accuracy percentages with handling for 0/0 cases
         merged_df['Abs RN Accuracy'] = merged_df.apply(
-            lambda row: 100.0 if row['HF RNs'] == 0 else (1 - abs(row['RN Diff']) / row['HF RNs']) * 100,
+            lambda row: 100.0 if row['HF RNs'] == 0 and row['Juyo RN'] == 0 else 
+                        (1 - abs(row['RN Diff']) / row['HF RNs']) * 100 if row['HF RNs'] != 0 else 0.0,
             axis=1
         )
         
         merged_df['Abs Rev Accuracy'] = merged_df.apply(
-            lambda row: 100.0 if row['HF Rev'] == 0 else (1 - abs(row['Rev Diff']) / row['HF Rev']) * 100,
+            lambda row: 100.0 if row['HF Rev'] == 0 and row['Juyo Rev'] == 0 else 
+                        (1 - abs(row['Rev Diff']) / row['HF Rev']) * 100 if row['HF Rev'] != 0 else 0.0,
             axis=1
         )
-        
+
         # Format accuracy percentages as strings with '%' symbol
         merged_df['Abs RN Accuracy'] = merged_df['Abs RN Accuracy'].map(lambda x: f"{x:.2f}%")
         merged_df['Abs Rev Accuracy'] = merged_df['Abs Rev Accuracy'].map(lambda x: f"{x:.2f}%")
